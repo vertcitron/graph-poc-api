@@ -1,0 +1,19 @@
+{
+  "name": "graph-poc-api",
+  "version": "0.0.1",
+  "description": "A R&D project to discover GraphQL",
+  "main": "server.js",
+  "repository": "git@github.com:vertcitron/graph-poc-api.git",
+  "author": "ssouron <stef@vertcitron.fr>",
+  "license": "MIT",
+  "private": false,
+  "scripts": {
+    "start": "node server.js",
+    "serve": "nodemon server.js"
+  },
+  "dependencies": {
+    "express": "^4.16.4",
+    "express-graphql": "^0.7.1",
+    "graphql": "^14.1.1"
+  }
+}
