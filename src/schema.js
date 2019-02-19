@@ -7,6 +7,8 @@ var schema = buildSchema(`
     },
     type Mutation {
         updateUser(id: Int!, first_name: String, last_name: String ): User
+        createUser(first_name: String, last_name: String): User
+        deleteUser(id: Int!): String
     },
     type User {
         id: Int

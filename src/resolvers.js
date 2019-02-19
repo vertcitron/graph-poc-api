@@ -1,24 +1,59 @@
 var users = require('../data/users.json')
+var mysql = require('promise-mysql')
+var credentials = require('../db-credentials')
 
-function normalize(str) {
-  return str.normalize('NFD').replace(/[\u0300-\u036f]/g, "").toLowerCase()
+query = sql => {
+  return mysql.createConnection(credentials)
+    .then(con => {
+      var res = con.query(sql)
+      con.end()
+      return res
+    })
+}
+
+var users = {
+  create: async ({ first_name, last_name }) => {
+    let sql = `INSERT INTO \`graph-poc-db\`.users (first_name, last_name)`
+    sql += ` VALUES ("${first_name || ''}", "${last_name || ''}");`
+    var res = await query(sql)
+    var id = res.insertId
+    var reres = await query(`SELECT id, first_name, last_name FROM \`graph-poc-db\`.users WHERE id = ${id};`)
+    return reres.length ? reres[0] : null
+  },
+  read: async ({ id }) => {
+    var res = await query(`SELECT id, first_name, last_name FROM \`graph-poc-db\`.users WHERE id = ${id};`)
+    return res.length ? res[0] : null
+  },
+  update: async ({ id, first_name, last_name }) => {
+    let sql = `UPDATE \`graph-poc-db\`.users SET `
+    if (first_name) sql += `first_name = "${first_name}"`
+    if (first_name && last_name) sql += ', '
+    if (last_name) sql += `last_name = "${last_name}"`
+    sql += ` WHERE id = ${id};`
+    await query(sql)
+    var res = await query(`SELECT id, first_name, last_name FROM \`graph-poc-db\`.users WHERE id = ${id};`)
+    return res.length ? res[0] : null
+  },
+  index: async ({ search }) => {
+    let sql = `SELECT id, first_name, last_name FROM \`graph-poc-db\`.users`
+    if (search) sql += ` WHERE (first_name LIKE "%${search}%" OR last_name LIKE "%${search}%");`
+    sql += ';'
+    var res = await query(sql)
+    return res
+  },
+  delete: async ({ id }) => {
+    let sql = `DELETE FROM \`graph-poc-db\`.users WHERE id = ${id};`
+    var res = await query(sql)
+    return 'successfully deleted'
+  }
 }
 
 var resolvers = {
-  message: () => 'Hello World !',
-  user: args => users.filter(user => user.id == args.id)[0],
-  users: args => {
-    const srch = normalize(args.search || '')
-    if (!srch) return users
-    return users.filter(user => {
-      const firstName = normalize(user.first_name)
-      const lastName = normalize(user.last_name)
-      return firstName.includes(srch) || lastName.includes(srch)
-    })
-  },
-  updateUser: ({id, first_name, last_name}) => {
-
-  }
+  user: users.read,
+  users: users.index,
+  updateUser: users.update,
+  createUser: users.create,
+  deleteUser: users.delete
 };
 
 module.exports = resolvers;
